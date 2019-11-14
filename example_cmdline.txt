@@ -1,0 +1,9 @@
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -fr
+
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -fs 8:0x10
+
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -f OWBoot_crc.hex
+
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -ur
+
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -us 31:0xEB
