@@ -1,10 +1,12 @@
-
+"""
+    Application layer for UPDI stack
+"""
 import logging
-import time
 
 import updi.constants as constants
 from updi.link import UpdiDatalink
 from updi.timeout import Timeout
+
 
 class UpdiApplication(object):
     """
@@ -73,6 +75,11 @@ class UpdiApplication(object):
         if not key_status & (1 << constants.UPDI_ASI_KEY_STATUS_CHIPERASE):
             raise Exception("Key not accepted")
 
+        # Insert NVMProg key as well
+        # In case of CRC being enabled, the device must be left in programming mode after the erase
+        # to allow the CRC to be disabled (or flash reprogrammed)
+        self._progmode_key()
+
         # Toggle reset
         self.reset(apply_reset=True)
         self.reset(apply_reset=False)
@@ -81,14 +88,14 @@ class UpdiApplication(object):
         if not self.wait_unlocked(100):
             raise Exception("Failed to chip erase using key")
 
-    def enter_progmode(self):
+    def _progmode_key(self):
         """
-            Enters into NVM programming mode
+            Inserts the NVMProg key and checks that its accepted
         """
         # First check if NVM is already enabled
         if self.in_prog_mode():
             self.logger.info("Already in NVM programming mode")
-            return True
+            return
 
         self.logger.info("Entering NVM programming mode")
 
@@ -101,6 +108,13 @@ class UpdiApplication(object):
 
         if not key_status & (1 << constants.UPDI_ASI_KEY_STATUS_NVMPROG):
             raise Exception("Key not accepted")
+
+    def enter_progmode(self):
+        """
+            Enters into NVM programming mode
+        """
+        # Enter NVMProg key
+        self._progmode_key()
 
         # Toggle reset
         self.reset(apply_reset=True)
@@ -124,7 +138,8 @@ class UpdiApplication(object):
         self.logger.info("Leaving NVM programming mode")
         self.reset(apply_reset=True)
         self.reset(apply_reset=False)
-        self.datalink.stcs(constants.UPDI_CS_CTRLB, (1 << constants.UPDI_CTRLB_UPDIDIS_BIT) | (1 << constants.UPDI_CTRLB_CCDETDIS_BIT))
+        self.datalink.stcs(constants.UPDI_CS_CTRLB,
+                           (1 << constants.UPDI_CTRLB_UPDIDIS_BIT) | (1 << constants.UPDI_CTRLB_CCDETDIS_BIT))
 
     def reset(self, apply_reset):
         """
@@ -142,7 +157,7 @@ class UpdiApplication(object):
             Waits for the NVM controller to be ready
         """
 
-        timeout = Timeout(10000) # TODO 10 sec timeout, just to be sure
+        timeout = Timeout(10000)  # 10 sec timeout, just to be sure
 
         self.logger.info("Wait flash ready")
         while not timeout.expired():
@@ -151,7 +166,8 @@ class UpdiApplication(object):
                 self.logger.info("NVM error")
                 return False
 
-            if not status & ((1 <<constants.UPDI_NVM_STATUS_EEPROM_BUSY) | (1 << constants.UPDI_NVM_STATUS_FLASH_BUSY)):
+            if not status & ((1 << constants.UPDI_NVM_STATUS_EEPROM_BUSY) |
+                             (1 << constants.UPDI_NVM_STATUS_FLASH_BUSY)):
                 return True
 
         self.logger.error("Wait flash ready timed out")
@@ -300,4 +316,3 @@ class UpdiApplication(object):
 
         # Do the read
         return self.datalink.ld_ptr_inc16(words)
-

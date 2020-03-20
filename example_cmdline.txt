@@ -1,0 +1,10 @@
+# fuse set
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -fs 8:0x10
+# upload fw
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -f OWBoot_crc.hex
+# userrow set
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -us 31:0xEB
+
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -fr
+
+d:\Programs\Python\Python37\python pyupdi.py -d tiny1616 -c COM27 -b 230400 -ur
